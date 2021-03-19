@@ -6,6 +6,7 @@
 // ===================================================
 // [Version]
 // 1.0.0 初版
+// 1.1.0 詳細専用パラメータを追加
 //=============================================================================
 // TMVplugin - 詳細説明ウィンドウ
 // バージョン: 2.0.3
@@ -126,6 +127,11 @@
  * @desc 特徴の項目名
  * 初期値: 特徴
  * @default 特徴
+ *
+ * @param plainText
+ * @desc 詳細の項目名
+ * 初期値: 詳細
+ * @default 詳細
  *
  * @param effectTextRecoverHp
  * @desc ＨＰ回復の書式
@@ -431,6 +437,7 @@
  *
  *   <dType:素材>       # タイプ名（右上に表示）を素材にする
  *   <dText:テキスト>   # 右側パラメータの下部にテキストを追加（改行可能）
+ *   <dPlnText:詳細テキスト>  # 中央画面に詳細テキストのみを表示（改行可能）
  */
 
 var Imported = Imported || {};
@@ -459,6 +466,7 @@ TMPlugin.DescriptionEx.TpCostText = TMPlugin.DescriptionEx.Parameters["tpCostTex
 TMPlugin.DescriptionEx.RequiredWtypeText = TMPlugin.DescriptionEx.Parameters["requiredWtypeText"];
 TMPlugin.DescriptionEx.EffectText = TMPlugin.DescriptionEx.Parameters["effectText"];
 TMPlugin.DescriptionEx.TraitText = TMPlugin.DescriptionEx.Parameters["traitText"];
+TMPlugin.DescriptionEx.PlainText = TMPlugin.DescriptionEx.Parameters["plainText"];
 TMPlugin.DescriptionEx.EffectTextRecoverHp = TMPlugin.DescriptionEx.Parameters["effectTextRecoverHp"];
 TMPlugin.DescriptionEx.EffectTextRecoverMp = TMPlugin.DescriptionEx.Parameters["effectTextRecoverMp"];
 TMPlugin.DescriptionEx.EffectTextGainTp = TMPlugin.DescriptionEx.Parameters["effectTextGainTp"];
@@ -667,12 +675,19 @@ TMPlugin.DescriptionEx.PassiveStateText = TMPlugin.DescriptionEx.Parameters["pas
     Window_DescriptionEx.prototype.refreshItem = function() {
         const descEx = TMPlugin.DescriptionEx;
         const profileY = this.profileY();
+        const x = this.itemPadding();
         let y = 0;
         this.drawItemName(this._item, 0, y);
         this.drawItemType();
         y = this.drawHorzLineUpper(y);
-        this.drawItemParameters(this.itemPadding(), y);
-        this.drawEffects(this.contents.width - this.itemPadding() - descEx.RightPaneWidth, y);
+        if (this._item.meta.dPlnText) {
+            this.drawPlainText(x, y);
+        } else {
+            this.drawItemParameters(x, y);
+            this.drawEffects(
+                this.contents.width - x - descEx.RightPaneWidth, y
+            );
+        }
         y = this.drawHorzLineLower(profileY);
         this.drawProfile(0, y);
     };
@@ -680,12 +695,19 @@ TMPlugin.DescriptionEx.PassiveStateText = TMPlugin.DescriptionEx.Parameters["pas
     Window_DescriptionEx.prototype.refreshWeapon = function() {
         const descEx = TMPlugin.DescriptionEx;
         const profileY = this.profileY();
+        const x = this.itemPadding();
         let y = 0;
         this.drawItemName(this._item, 0, y);
         this.drawWeaponType();
         y = this.drawHorzLineUpper(y);
-        this.drawEquipParameters(this.itemPadding(), y);
-        this.drawTraits(this.contents.width - this.itemPadding() - descEx.RightPaneWidth, y);
+        if (this._item.meta.dPlnText) {
+            this.drawPlainText(x, y);
+        } else {
+           this.drawEquipParameters(x, y);
+           this.drawTraits(
+               this.contents.width - x - descEx.RightPaneWidth, y
+           );
+        }
         y = this.drawHorzLineLower(profileY);
         this.drawProfile(0, y);
     };
@@ -693,12 +715,19 @@ TMPlugin.DescriptionEx.PassiveStateText = TMPlugin.DescriptionEx.Parameters["pas
     Window_DescriptionEx.prototype.refreshArmor = function() {
         const descEx = TMPlugin.DescriptionEx;
         const profileY = this.profileY();
+        const x = this.itemPadding();
         let y = 0;
         this.drawItemName(this._item, 0, y);
         this.drawArmorType();
         y = this.drawHorzLineUpper(y);
-        this.drawEquipParameters(this.itemPadding(), y);
-        this.drawTraits(this.contents.width - this.itemPadding() - descEx.RightPaneWidth, y);
+        if (this._item.meta.dPlnText) {
+            this.drawPlainText(x, y);
+        } else {
+            this.drawEquipParameters(x, y);
+            this.drawTraits(
+                this.contents.width - x - descEx.RightPaneWidth, y
+            );
+        }
         y = this.drawHorzLineLower(profileY);
         this.drawProfile(0, y);
     };
@@ -706,15 +735,22 @@ TMPlugin.DescriptionEx.PassiveStateText = TMPlugin.DescriptionEx.Parameters["pas
     Window_DescriptionEx.prototype.refreshSkill = function() {
         const descEx = TMPlugin.DescriptionEx;
         const profileY = this.profileY();
+        const x = this.itemPadding();
         let y = 0;
         this.drawItemName(this._item, 0, y);
         this.drawSkillType();
         y = this.drawHorzLineUpper(y);
-        if (Imported.TMPassiveSkill && this._item.meta.passive) {
-          this.drawPassiveSkillParameters(this.itemPadding(), y);
+        if (this._item.meta.dPlnText) {
+            this.drawPlainText(x, y);
         } else {
-          this.drawSkillParameters(this.itemPadding(), y);
-          this.drawEffects(this.contents.width - this.itemPadding() - descEx.RightPaneWidth, y);
+            if (Imported.TMPassiveSkill && this._item.meta.passive) {
+              this.drawPassiveSkillParameters(x, y);
+            } else {
+              this.drawSkillParameters(x, y);
+              this.drawEffects(
+                  this.contents.width - x - descEx.RightPaneWidth, y
+              );
+            }
         }
         y = this.drawHorzLineLower(profileY);
         this.drawProfile(0, y);
@@ -1081,11 +1117,23 @@ TMPlugin.DescriptionEx.PassiveStateText = TMPlugin.DescriptionEx.Parameters["pas
             const textArray = this._item.meta.dText.split(/\r\n|\r|\n/);
             let yy = y;
             for (let i = 0; i < textArray.length; i++) {
-                yy = this.drawRightParameter(x, y, textArray[i]);
+                yy = this.drawRightParameter(x, yy, textArray[i]);
             }
         }
     };
-    
+
+    Window_DescriptionEx.prototype.drawPlainText = function(x, y) {
+        const descEx = TMPlugin.DescriptionEx;
+        const textArray = this._item.meta.dPlnText.split(/\r\n|\r|\n/);
+        this.changeTextColor(this.systemColor());
+        let yy = y;
+        this.drawText(descEx.PlainText, x, yy, descEx.RightPaneWidth);
+        this.resetTextColor();
+        for (let i = 0; i < textArray.length; i++) {
+            yy = this.drawRightParameter(x, yy, textArray[i]);
+        }
+    };
+
     Window_DescriptionEx.prototype.drawHorzLineUpper = function(y) {
         const horzLineHeight = TMPlugin.DescriptionEx.HorzLineHeight;
         const yy = y + this.lineHeight();
