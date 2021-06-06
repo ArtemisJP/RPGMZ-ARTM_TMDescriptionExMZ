@@ -7,6 +7,7 @@
 // [Version]
 // 1.0.0 初版
 // 1.1.0 詳細専用パラメータを追加
+// 1.1.1 UIオプションOFF時の不具合対応
 //=============================================================================
 // TMVplugin - 詳細説明ウィンドウ
 // バージョン: 2.0.3
@@ -1285,12 +1286,16 @@ TMPlugin.DescriptionEx.PassiveStateText = TMPlugin.DescriptionEx.Parameters["pas
     //
     Scene_MenuBase.prototype.descriptionOpen = function(mainWindow) {
         Scene_Base.prototype.descriptionOpen.call(this, mainWindow);
-        this.moveMenuButton(true);
+        if (this._cancelButton) {
+            this.moveMenuButton(true);
+        }
     };
     
     Scene_MenuBase.prototype.descriptionClose = function() {
         Scene_Base.prototype.descriptionClose.call(this);
-        this.moveMenuButton(false);
+        if (this._cancelButton) {
+            this.moveMenuButton(false);
+        }
     };
 
     Scene_MenuBase.prototype.moveMenuButton = function(flag) {
